@@ -20,3 +20,14 @@ const protect = async (req, res, next) => {
         return res.status(401).json({message : 'Not authorized, no token'});
     }
 }
+
+const admin = (req, res, next) => {
+    if(req.user && req.user.role === 'admin'){
+        next();
+    }
+    else{
+        return res.status(404).json({message: 'Forbidden, admin access required'});
+    }
+};
+
+module.exports = {protect, admin};

@@ -22,7 +22,7 @@ exports.registerUser = async (req,res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password,salt);
     try{
-        const user = User.create({name, email, password : hashedPassword, role: 'user', isVerified: false});
+        const user = await User.create({name, email, password : hashedPassword, role: 'user', isVerified: false});
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         console.log(`OTP for ${email} : ${otp}`);
@@ -45,12 +45,12 @@ exports.loginUser = async (req,res) => {
 
     let user = await User.findOne({email});
     if(!user){
-        res.status(400).json({error : 'Invalid Credetials, Please Sign up first.'});
+        return res.status(400).json({error : 'Invalid Credetials, Please Sign up first.'});
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if(!isMatch){
-        res.status(400).json({error : 'Invalid Credentials'});
+        return res.status(400).json({error : 'Invalid Credentials'});
     }
 
     if(!user.isVerified && user.role === 'user'){
@@ -68,7 +68,7 @@ exports.loginUser = async (req,res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user.id, user.role)      
+        token: generateToken(user._id, user.role)      
     })
 };
 
@@ -78,7 +78,7 @@ exports.verifyOtp = async (req,res) => {
     const otpRecord = await OTP.findOne({email, otp, action: 'account_verification'});
 
     if(!otpRecord){
-        res.status(404).json({error: 'Invalid or expired OTP'});
+        return res.status(404).json({error: 'Invalid or expired OTP'});
     }
 
     const user = await User.findOneAndUpdate({email}, {isVerified: true});
